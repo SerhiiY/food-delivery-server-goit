@@ -7,9 +7,9 @@ const router = express.Router();
 router.get('/:id', (req, res) => {
   const productsFilePath = path.join(__dirname, '../db/users', `${req.params.id}.json`);
 
-  fs.existsSync(productsFilePath, (exists) => { 
+  fs.exists(productsFilePath, (exists) => { 
     if (!exists) return res.end("User doesn't exist!");  
-    const readable = fs.createReadStream(productsFilePath);
+    const readable = fs.createReadStream(productsFilePath, 'utf8');
     readable.pipe(res);
   });
 
@@ -18,7 +18,7 @@ router.get('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
   const productsFilePath = path.join(__dirname, '../db/users', `${req.params.id}.json`);
   
-  fs.existsSync(productsFilePath, (exists) => { 
+  fs.exists(productsFilePath, (exists) => { 
     if (!exists) return res.end("User doesn't exist!");  
     
     fs.unlink(productsFilePath, (err) => {
@@ -37,11 +37,11 @@ router.delete('/:id', (req, res) => {
 router.post('/', (req, res) => {
   const productsFilePath = path.join(__dirname, '../db/users', `${req.body.email}.json`);
 
-  fs.existsSync(productsFilePath, (exists) => { 
+  fs.exists(productsFilePath, (exists) => { 
     if (exists) return res.end("User already exists!");  
     
     fs.writeFile(productsFilePath, JSON.stringify(req.body));
-    res.end(JSON.stringify(
+    res.send(JSON.stringify(
       {
       "status": "success", 
       "user": req.body
