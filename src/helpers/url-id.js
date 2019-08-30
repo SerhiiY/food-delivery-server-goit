@@ -7,11 +7,24 @@ function getId(url, params) {
   const lastIndex = url.lastIndexOf('/');
   const idString = url.slice(lastIndex + 1).trim(); // = user or product id on the end of url (/:id)
   if(hasNumber(idString) && +idString !== -1) return idString;
+  if(getParam(params) === "ids") {
+    return getParamValuesArr(params);
+  }
+  if(getParam(params) === "category") {
+    return getParamValuesArr(params);
+  }
+  return null;
+}
+
+function getParamValuesArr (item) {
+  item = decodeURIComponent(item).slice(item.lastIndexOf('=') + 1).trim();
+  item = item.replace(/[`'"\s+]/g,"");
+  return item.split(',');
+}
+
+function getParam(params) {
   if(params === null) return null;
-  let ids = decodeURIComponent(params).slice(params.lastIndexOf('=') + 1).trim();
-  ids = ids.replace(/[`'"\s+]/g,"");
-  idsArr = ids.split(',');
-  return idsArr;
+  return params.slice(params.lastIndexOf('?') + 1, params.lastIndexOf('='));
 }
 
 function getIdFreeUrl (url, params) {
@@ -30,4 +43,5 @@ const idFreeUrl = (routerConfig, url, params) => {
 module.exports = {
   idFreeUrl: idFreeUrl,
   id: getId,
+  param: getParam
   }
