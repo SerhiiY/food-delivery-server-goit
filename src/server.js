@@ -6,9 +6,10 @@ const {idFreeUrl, id} = require('./helpers/url-id');
 
 const startServer = port => {
   const server = http.createServer((req, res) => {
-    const parsedUrl = url.parse(req.url);
+    const parsedUrl = url.parse(req.url); // products
+    const params = parsedUrl.search; // ?ids=
     // Get router function using url without id and id as a argument
-    (idFreeUrl(router, parsedUrl.pathname) || router.default)(req, res, id(parsedUrl.pathname));
+    (idFreeUrl(router, parsedUrl.pathname, params) || router.default)(req, res, id(parsedUrl.pathname, params));
   });
 
   // server.on('request', (req, res) => {

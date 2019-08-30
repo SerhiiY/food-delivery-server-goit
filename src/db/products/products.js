@@ -6,13 +6,13 @@ const productsRoute = (req, res, id) => {
 
   if (reqMethod === 'GET') {
 
-    res.writeHead(200, {"Content-Type": "application/json"});
     const productsFilePath = path.join(__dirname, 'all-products.json');
 
     if(id == null){
+      res.writeHead(200, {"Content-Type": "application/json"});
       fs.createReadStream(productsFilePath, 'utf8').pipe(res);
-    } else
-    {
+    } 
+    else if (typeof(id) === "string"){
       fs.readFile(productsFilePath, 'utf8')
       .then(data => {
         
@@ -20,6 +20,7 @@ const productsRoute = (req, res, id) => {
         const product = parsedData.find(el => el.id == id);
 
         if (product !== undefined) {
+          res.writeHead(200, {"Content-Type": "application/json"});
           const stringData = JSON.stringify({"status": "success", "product": product});
           res.end(stringData);
         } else 
@@ -28,8 +29,32 @@ const productsRoute = (req, res, id) => {
           const stringData = JSON.stringify({"status": "not found"});
           res.end(stringData);
         }
-
       });
+    }
+    else {
+      fs.readFile(productsFilePath, 'utf8')
+      .then(data => {
+        const parsedData = JSON.parse(data);
+        let products = [];
+        id.forEach((id) => {
+            let product = parsedData.find(el => el.id == id);
+            if(product === undefined) return products.push({id: id, status: "Not found"});
+            return products.push(product);
+          });
+
+        if (products !== "") {
+          res.writeHead(200, {"Content-Type": "application/json"});
+          console.log(products);
+          const stringData = JSON.stringify({"status": "success", "products": products});
+          res.end(stringData);
+        } else 
+        {
+          res.writeHead(404, {"Content-Type": "application/json"});
+          const stringData = JSON.stringify({"status": "not found"});
+          res.end(stringData);
+        }
+      });
+
     }
 
   } else
