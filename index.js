@@ -1,25 +1,15 @@
 const { port } = require('./config/config');
 
-const productsRouter = require('./src/routers/products-router');
-const usersRouter = require('./src/routers/users-router');
-
-const cookieParser = require('cookie-parser');
-
 const cors = require('cors');
 const express = require('express');
 const app = express();
 
-// Use cross origin resourses sharing
-app.use(cors());
-// Parse URL-encoded bodies (as sent by HTML forms)
-app.use(express.urlencoded());
-// Parse JSON bodies (as sent by API clients)
-app.use(express.json());
+const router = require('./src/routers/router');
 
-app.use(cookieParser());
-
-app.use('/products', productsRouter);
-app.use('/users', usersRouter);
+app.use(cors());                // Use cross origin resourses sharing
+app.use(express.urlencoded());  // Parse URL-encoded bodies (as sent by HTML forms)
+app.use(express.json());        // Parse JSON bodies (as sent by API clients)
+app.use('/', router);
 
 app.listen(port, (err) => {
   if (err) {
