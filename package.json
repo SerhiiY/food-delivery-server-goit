@@ -17,6 +17,7 @@
     "fs-extra": "^8.1.0",
     "mongodb": "^3.3.0-beta2",
     "morgan": "^1.9.1",
-    "nodemon": "^1.18.4"
+    "nodemon": "^1.18.4",
+    "shortid": "^2.2.14"
   }
 }
