@@ -11,5 +11,4 @@ router.use('/users', usersRoute);
 router.use('/orders', ordersRoute);
 router.use('/', mainRoute);
 
-
 module.exports = router;
