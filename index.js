@@ -1,5 +1,4 @@
-const { port } = require('./config/config');
-
+const {port} = require('./config/config');
 const cors = require('cors');
 const express = require('express');
 const app = express();
@@ -17,3 +16,4 @@ app.listen(port, (err) => {
   }
   console.log(`Server is listening on ${port}`)
 });
+
