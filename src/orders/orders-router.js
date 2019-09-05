@@ -46,7 +46,9 @@ router.post('/', (req, res) => {
         dataToWrite.id = orderId;
 
         Promise.all([
-          fs.mkdir(userFolderPath + '/orders').catch(error => console.error(error)),
+          fs.exists(userFolderPath + '/orders', exists => {
+            if(!exists) fs.mkdir(userFolderPath + '/orders').catch(error => console.error(error));
+          }),
           fs.writeFile(userOrderPath, JSON.stringify(dataToWrite)).catch(error => console.error(error)),
         ]).then( () => 
           {

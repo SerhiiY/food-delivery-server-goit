@@ -8,11 +8,12 @@ const productsFilePath = path.join(__dirname, '../../data/products', 'all-produc
 
 router.get('/', (req, res) => {
   const readable = fs.createReadStream(productsFilePath, 'utf8');
-  
-  if(req.query[0] === undefined) readable.pipe(res);
+
+  const keys = Object.keys(req.query);
+  let key = keys[0]; //'ids' or 'category'
+
+  if(key === undefined) readable.pipe(res);
   else {
-    const keys = Object.keys(req.query);
-    let key = keys[0]; //'ids' or 'category'
     let values = req.query[key]; //'31, 32,33'
     const valuesArr = getValuesArray(values); //[31,32,33]
     let products = [];
@@ -41,12 +42,10 @@ router.get('/', (req, res) => {
     readable.on("end", () => {
       if (products[0] !== undefined) 
       {
-        res.writeHead(200, {"Content-Type": "application/json"});
         const stringData = JSON.stringify({"status": "success", "products": products});
         res.end(stringData);
       } 
       else {
-        res.writeHead(404, {"Content-Type": "application/json"});
         const stringData = JSON.stringify({"status": "no products", "products": products});
         res.end(stringData);
       };
@@ -67,8 +66,7 @@ router.get('/:id', (req, res) => {
   let elemById;
 
   readable.on("error", error => {
-    console.log(error);
-    res.writeHead(500)
+    console.error(error);
     res.send(`Internal server error!`)
   });
 
