@@ -6,7 +6,7 @@ const orderSchema = mongoose.Schema({
   productsList: [
     { 
       product: String,      //productID
-      type: String,         //"M" || "XL" || "XXL"
+      size: String,         //"M" || "XL" || "XXL"
       itemsCount: Number    
     }
   ],
