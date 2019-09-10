@@ -1,114 +1,91 @@
-const fs = require('fs-extra');
-const path = require('path');
+const Product = require('../db/schemas/product');
 
 const express = require('express');
 const router = express.Router();
 
-const productsFilePath = path.join(__dirname, '../../data/products', 'all-products.json');
+//-------------------------------------------------------------\\
+const sendResponse = (products, response) => {
+  response.status(200);
+  response.json({"status":"success", "products":products});
+};
 
-router.get('/', (req, res) => {
-  const readable = fs.createReadStream(productsFilePath, 'utf8');
+const sendError = (err, response) => {
+  console.log(err);
+  response.status(400);
+  response.json({"status": "error","error": err});
+};
 
-  const keys = Object.keys(req.query);
-  let key = keys[0]; //'ids' or 'category'
+const getValuesArray = (values) => {
+  const valuesArr = values.replace(/[`'"\s+]/g,"").split(',');
+  return valuesArr;
+}
+//-------------------------------------------------------------\\
 
-  if(key === undefined) readable.pipe(res);
-  else {
-    let values = req.query[key]; //'31, 32,33'
+router
+//-------------------------------------------------------------
+  .get('/', (request, response) => {
+
+    const findBy = {};
+
+    const keys = Object.keys(request.query);
+    const key = keys[0]; //'ids' or 'category'
+
+    if(key !== undefined) 
+    {
+    const values = request.query[key]; //'31, 32,33'
     const valuesArr = getValuesArray(values); //[31,32,33]
-    let products = [];
 
-    readable.on("data", data => {
-      const parsedData = JSON.parse(data);
+    if(key === "ids") findBy._id = valuesArr;
+    if(key === "categories") findBy.categories = {$in: valuesArr};
+    }
 
-      if(key === "ids") 
-      {
-        valuesArr.forEach(id => 
-        {
-          let product = parsedData.find(el => el.id == id);
-          if(product === undefined) return;
-          product = deleteProductKeys(product);
-          products.push(product);
-        })
-      } //key === ids
-      else if(key === 'category') 
-      {
-        const productsArr = parsedData.filter(el => valuesArr.some(value => el.categories.includes(value) ) );
-        products = productsArr.sort((a, b) => a.id > b.id ? 1 : -1);
-        products.forEach(product => product = deleteProductKeys(product));
-      } //key === category
-    }) //readable.on data 
+    Product
+      .find(findBy)
+      .then(products => sendResponse(products, response))
+      .catch(err => sendError(err, response));
+  })
+//-------------------------------------------------------------
+  .get('/:id', (request, response) => {
 
-    readable.on("end", () => {
-      if (products[0] !== undefined) 
-      {
-        const stringData = JSON.stringify({"status": "success", "products": products});
-        res.end(stringData);
-      } 
-      else {
-        const stringData = JSON.stringify({"status": "no products", "products": products});
-        res.end(stringData);
-      };
-    }); //readable.on end
-  }; //if query.key !== {}
+    const id = request.params.id;
 
-  readable.on('error', (error) => {
-    console.log(error);
-    res.writeHead(500)
-    res.send(`Internal server error!`)
-  });
+    Product
+      .findById(id)
+      .then(order => sendResponse(order, response))
+      .catch(err => sendError(err, response))
+  })
+//-------------------------------------------------------------
+  .put('/:id', (request, response) => {
 
-}); //router.get "/"
+    const id = request.params.id;
+    const product = request.body;
 
-router.get('/:id', (req, res) => {
+    Product
+      .findOneAndUpdate(
+        { _id: id }, 
+        product, 
+        { new: true } // вернуть обновленный документ
+      )
+      .then(order => sendResponse(order, response))
+      .catch(err => sendError(err, response))
+  })
+//-------------------------------------------------------------
+  .post('/', (request, response) => {
 
-  const readable = fs.createReadStream(productsFilePath, "utf8");
-  let elemById;
+    let productsArr = [];
+    const products = request.body;
 
-  readable.on("error", error => {
-    console.error(error);
-    res.send(`Internal server error!`)
-  });
-
-  readable.on('data', (data) => {
-    const parsedData = JSON.parse(data);
-    elemById = parsedData.filter(el => el.id == req.params.id);
-
-    if(elemById[0] !== undefined) {
-      res.send(JSON.stringify(
-        {
-        "status": "success", 
-        "products": elemById
-        }
-      ));
-      readable.destroy();
-    } 
-  }); //readable on data
-
-  readable.on("end", () => {
-    res.send(JSON.stringify(
-      {
-      "status": "no products", 
-      "products": elemById
-      }
-    ));
-  }); //readable on end
-});
-
-function getValuesArray(values) {
-  return values = 
-  values.replace(/[`'"\s+]/g,"").split(',');
-}
-
-function deleteProductKeys (product) {
-  const newProduct = product;
-  delete newProduct.price
-  delete newProduct.currency
-  delete newProduct.creatorId
-  delete newProduct.created
-  delete newProduct.modified
-  delete newProduct.categories;
-  return newProduct;
-}
+    Promise.all(
+      products.map( async product => {
+        product = new Product(product);
+        await product
+        .save()
+        .then(result => productsArr.push(result))
+        .catch(err => sendError(err, response));
+      })
+    )
+    .then(() => sendResponse(productsArr, response))
+    .catch(err => sendError(err, response));
+  })
 
 module.exports = router;
