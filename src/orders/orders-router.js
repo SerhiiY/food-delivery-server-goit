@@ -1,69 +1,48 @@
-const fs = require('fs-extra');
-const path = require('path');
-const shortId = require('shortid');
-
 const express = require('express');
 const router = express.Router();
+const Order = require('../db/schemas/order');
 
-const productsFilePath = path.join(__dirname, '../../data/products', 'all-products.json');
+//-------------------------------------------------------------\\
+const sendResponse = (order, response) => {
+  response.status(200);
+  response.json({"status":"success", "order":order});
+};
 
-router.post('/', (req, res) => {
-  const productsIds = req.body.products;
-  
-  const readable = fs.createReadStream(productsFilePath, 'utf8');
+const sendError = (err, response) => {
+  console.log(err);
+  response.status(400);
+  response.json({"status": "error","error": err});
+};
+//-------------------------------------------------------------\\
 
-  let products = []; //[31,32,33]
+router
+  .post('/', (request, response) => {
 
-  readable.on("data", data => {
-    const parsedData = JSON.parse(data);
+    const order = request.body;
+    const newOrder = new Order(order);
 
-    productsIds.forEach(id => 
-    {
-      let product = parsedData.find(el => el.id == id);
-      if(product === undefined) return;
-      products.push(product.id);
-    })
+    newOrder
+      .save()
+      .then(order => sendResponse(order, response))
+      .catch(err => sendError(err, response));
+  })
 
-  }) //readable.on data
+  .get('/', (request, response) => {
 
-  readable.on('end', () => {
-    if(products[0] === undefined) 
-    {
-      res.status(404);
-      res.send(JSON.stringify({'status': 'failed', 'order': null}));
-    } 
-    else 
-    {
-      const userId = req.body.user;
-      const orderId = shortId.generate();
-      const userFolderPath = path.join(__dirname, '../../data/users', `${userId}`);
-      const userOrderPath = path.join(userFolderPath, '/orders', `${orderId}.json`);
+    Order
+      .find()
+      .then(order => sendResponse(order, response))
+      .catch(err => sendError(err, response));
+  })
 
-      fs.exists(userFolderPath, exists => {
-        if(!exists) return res.send("User does not exist");
+  .get('/:id', (request, response) => {
 
-        const dataToWrite = req.body;
-        dataToWrite.id = orderId;
+    const id = request.params.id;
 
-        Promise.all([
-          fs.exists(userFolderPath + '/orders', exists => {
-            if(!exists) fs.mkdir(userFolderPath + '/orders').catch(error => console.error(error));
-          }),
-          fs.writeFile(userOrderPath, JSON.stringify(dataToWrite)).catch(error => console.error(error)),
-        ]).then( () => 
-          {
-            res.status(200);
-            res.send(JSON.stringify(  
-              {
-                "status": "success", 
-                "order": dataToWrite
-              }
-            ));
-          }).catch(error => console.error(error));
-
-      }) //fs.exists
-    } //products[0] !== undefined
-  }) //readable.on end
-}); //post order
+    Order
+      .findById(id)
+      .then(order => sendResponse(order, response))
+      .catch(err => sendError(err, response));
+  })
 
 module.exports = router;
