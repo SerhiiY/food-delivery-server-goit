@@ -3,9 +3,9 @@ const router = express.Router();
 const Order = require('../db/schemas/order');
 
 //-------------------------------------------------------------\\
-const sendResponse = (order, response) => {
+const sendResponse = (orders, response) => {
   response.status(200);
-  response.json({"status":"success", "order":order});
+  response.json({"status":"success", "orders":orders});
 };
 
 const sendError = (err, response) => {
@@ -23,7 +23,7 @@ router
 
     newOrder
       .save()
-      .then(order => sendResponse(order, response))
+      .then(orders => sendResponse(orders, response))
       .catch(err => sendError(err, response));
   })
 
@@ -31,7 +31,7 @@ router
 
     Order
       .find()
-      .then(order => sendResponse(order, response))
+      .then(orders => sendResponse(orders, response))
       .catch(err => sendError(err, response));
   })
 
@@ -41,7 +41,7 @@ router
 
     Order
       .findById(id)
-      .then(order => sendResponse(order, response))
+      .then(orders => sendResponse(orders, response))
       .catch(err => sendError(err, response));
   })
 
